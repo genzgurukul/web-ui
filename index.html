@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GraphQL Recommendation App</title>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .logo {
+      width: 60px;
+      height: auto;
+      margin-right: 15px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+      margin: 0;
+    }
+    h2 {
+      margin-top: 10px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 15px;
+    }
+    form label {
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    form input[type="text"] {
+      padding: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    form button {
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      padding: 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    form button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      background-color: #e9ecef;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header with Company Logo and Title -->
+    <header class="header">
+      <img src="company-logo.png" alt="Company Logo" class="logo">
+      <h1>GraphQL Recommendation App</h1>
+    </header>
+
+    <!-- Section: Get Recommendations -->
+    <section class="section">
+      <h2>Get User Recommendations</h2>
+      <form id="getRecommendationForm">
+        <label for="userIdGet">User ID:</label>
+        <input type="text" id="userIdGet" placeholder="e.g., user_5000" required>
+        <button type="submit">Get Recommendations</button>
+      </form>
+      <div id="getRecommendationResult" class="result"></div>
+    </section>
+
+    <!-- Section: Add Recommendation -->
+    <section class="section">
+      <h2>Add Recommendation</h2>
+      <form id="addRecommendationForm">
+        <label for="userIdAdd">User ID:</label>
+        <input type="text" id="userIdAdd" placeholder="e.g., user_5000" required>
+        <label for="categoryAdd">Category:</label>
+        <input type="text" id="categoryAdd" placeholder="e.g., NewCategory" required>
+        <button type="submit">Add Recommendation</button>
+      </form>
+      <div id="addRecommendationResult" class="result"></div>
+    </section>
+
+    <!-- Section: Remove Recommendation -->
+    <section class="section">
+      <h2>Remove Recommendation</h2>
+      <form id="removeRecommendationForm">
+        <label for="userIdRemove">User ID:</label>
+        <input type="text" id="userIdRemove" placeholder="e.g., user_5000" required>
+        <label for="categoryRemove">Category:</label>
+        <input type="text" id="categoryRemove" placeholder="e.g., NewCategory" required>
+        <button type="submit">Remove Recommendation</button>
+      </form>
+      <div id="removeRecommendationResult" class="result"></div>
+    </section>
+  </div>
+
+  <script>
+    // Replace with your actual GraphQL gateway endpoint.
+    const GRAPHQL_ENDPOINT = "http://35.238.156.18:80/";
+
+    // Helper function to send a GraphQL request
+    async function graphqlRequest(query, variables = {}) {
+      try {
+        const response = await fetch(GRAPHQL_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, variables })
+        });
+        return await response.json();
+      } catch (error) {
+        console.error("GraphQL request failed:", error);
+        throw error;
+      }
+    }
+
+    // Get Recommendation Form
+    document.getElementById("getRecommendationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("userIdGet").value;
+      const query = `
+        query GetRecommendation($userId: String!) {
+          getRecommendation(user_id: $userId) {
+            user_id
+            recommendations
+          }
+        }
+      `;
+      const resultDiv = document.getElementById("getRecommendationResult");
+      resultDiv.textContent = "Loading...";
+      try {
+        const result = await graphqlRequest(query, { userId });
+        if (result.errors) {
+          resultDiv.innerHTML = `<span class="error">${result.errors[0].message}</span>`;
+        } else {
+          const rec = result.data.getRecommendation;
+          resultDiv.innerHTML = `<strong>User:</strong> ${rec.user_id}<br><strong>Recommendations:</strong> ${rec.recommendations.join(", ")}`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+
+    // Add Recommendation Form
+    document.getElementById("addRecommendationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("userIdAdd").value;
+      const category = document.getElementById("categoryAdd").value;
+      const query = `
+        mutation AddRecommendation($userId: String!, $category: String!) {
+          addRecommendation(user_id: $userId, category: $category) {
+            user_id
+            recommendations
+          }
+        }
+      `;
+      const resultDiv = document.getElementById("addRecommendationResult");
+      resultDiv.textContent = "Processing...";
+      try {
+        const result = await graphqlRequest(query, { userId, category });
+        if (result.errors) {
+          resultDiv.innerHTML = `<span class="error">${result.errors[0].message}</span>`;
+        } else {
+          const rec = result.data.addRecommendation;
+          resultDiv.innerHTML = `<strong>User:</strong> ${rec.user_id}<br><strong>Recommendations:</strong> ${rec.recommendations.join(", ")}`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+
+    // Remove Recommendation Form
+    document.getElementById("removeRecommendationForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const userId = document.getElementById("userIdRemove").value;
+      const category = document.getElementById("categoryRemove").value;
+      const query = `
+        mutation RemoveRecommendation($userId: String!, $category: String!) {
+          removeRecommendation(user_id: $userId, category: $category) {
+            user_id
+            recommendations
+          }
+        }
+      `;
+      const resultDiv = document.getElementById("removeRecommendationResult");
+      resultDiv.textContent = "Processing...";
+      try {
+        const result = await graphqlRequest(query, { userId, category });
+        if (result.errors) {
+          resultDiv.innerHTML = `<span class="error">${result.errors[0].message}</span>`;
+        } else {
+          const rec = result.data.removeRecommendation;
+          resultDiv.innerHTML = `<strong>User:</strong> ${rec.user_id}<br><strong>Recommendations:</strong> ${rec.recommendations.join(", ")}`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<span class="error">${error.message}</span>`;
+      }
+    });
+  </script>
+</body>
+</html>
