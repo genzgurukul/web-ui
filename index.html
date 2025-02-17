@@ -129,8 +129,8 @@
   </div>
 
   <script>
-    // Replace with your actual GraphQL gateway endpoint.
-    const GRAPHQL_ENDPOINT = "http://35.238.156.18:80/";
+    // The placeholder will be substituted with the environment variable at runtime.
+    const GRAPHQL_ENDPOINT = "__GRAPHQL_ENDPOINT__";
 
     // Helper function to send a GraphQL request
     async function graphqlRequest(query, variables = {}) {
