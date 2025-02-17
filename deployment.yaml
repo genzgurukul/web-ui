@@ -14,9 +14,12 @@ spec:
     spec:
       containers:
       - name: static-ui
-        image: sumanth17121988/simple-ui:1
+        image: <your-dockerhub-username>/static-ui:latest
         ports:
         - containerPort: 80
+        env:
+        - name: GRAPHQL_ENDPOINT
+          value: "http://35.238.156.18:80/"  # Set your actual endpoint here
 ---
 apiVersion: v1
 kind: Service
